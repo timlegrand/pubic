@@ -4,10 +4,9 @@ import requests
 import urllib.parse
 import random
 import string
+import logging
 
 from getpass import getpass
-
-import time  # TODO remove
 
 
 HUBIC_API_ENDPOINT = "https://api.hubic.com/"
@@ -23,17 +22,15 @@ def get_storage_credentials():
 
     with open('client_id.txt') as f:
         client_id = f.readline().rstrip('\n')
-    print(client_id)
+    logging.debug(client_id)
 
     with open('client_secret.txt') as f:
         client_secret = f.readline().rstrip('\n')
-    print(client_secret)
+    logging.debug(client_secret)
 
 
     # 1. Request token
-    print()
-    print("# 1. Authorization Code Request")
-    print()
+    logging.info("1. Authorization Code Request")
 
     redirect_uri = urllib.parse.quote(HUBIC_API_ENDPOINT, safe="")
     # scope = "usage.r,account.r,getAllLinks.r,credentials.r,sponsorCode.r,activate.w,sponsored.r,links.drw"
@@ -46,35 +43,32 @@ def get_storage_credentials():
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    print(request_token_url)
+    logging.debug(request_token_url)
     response = requests.get(request_token_url, headers=headers)
-    print(response.status_code)
+    logging.debug(response.status_code)
 
-    print(response.headers.get("location", "Cannot get response location header."))
-    print("Parsing response HTML to get oauth code...")
+    logging.debug(response.headers.get("location", "Cannot get response location header."))
+    logging.debug("Parsing response HTML to get oauth code...")
 
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
 
     try:
         oauth_number = soup.find_all("input", {"name": "oauth"})[0]["value"]
-        print(f"oauth_number: {oauth_number}")
+        logging.debug(f"oauth_number: {oauth_number}")
     except:
         import pdb
         pdb.set_trace()
 
 
     # 2. Login & Consent
-    time.sleep(1)
-    print()
-    print("# 2. Login & Consent")
-    print()
+    logging.info("2. Login & Consent")
 
 
     try:
         with open('user_login.txt') as f:
             user_login = f.readline().rstrip('\n')
-            print(user_login)
+            logging.debug(user_login)
             user_login = urllib.parse.quote(user_login, safe="")
     except:
         user_login = input("login: ")
@@ -82,7 +76,7 @@ def get_storage_credentials():
     try:
         with open('user_password.txt') as f:
             user_password = f.readline().rstrip('\n')
-            print("*" * len(user_password))
+            logging.debug("*" * len(user_password))
             user_password = urllib.parse.quote(user_password, safe="")
     except:
         user_password = getpass("password: ")
@@ -91,15 +85,15 @@ def get_storage_credentials():
 
     oauth_url = "https://api.hubic.com/oauth/auth/"
 
-    print("Sending login request...")
-    print(oauth_url)
-    print(headers)
-    print(data)
+    logging.debug("Sending login request...")
+    logging.debug(oauth_url)
+    logging.debug(headers)
+    logging.debug(data)
     response = requests.post(oauth_url, headers=headers, data=data)
-    print(response.status_code)
-    print(response.url)
+    logging.debug(response.status_code)
+    logging.debug(response.url)
     qs = urllib.parse.parse_qs(urllib.parse.urlparse(response.url).query)
-    print(qs)
+    logging.debug(qs)
 
     # This first GET request can sometimes goes into error state. User can refuse to give you access, or your scope can be malformed. When this kind of error happened, our login application will redirect user to your application with two parameters in the URL : error, and error_description. You can find a full description of all different errors :
     # HTTP 	error 	error_description
@@ -118,16 +112,13 @@ def get_storage_credentials():
 
 
     # 3. Access token
-    time.sleep(1)
-    print()
-    print("# 3. Access Token Request")
-    print()
+    logging.info("3. Access Token Request")
 
     # Convert creds to base64
     # api_hubic_1366206728U6fa...K6SMkMmnU4lQUcnRy5E26
     # Base64 : YXBpX2h1YmlHhvdf...415VNGxRVWNuUnk1RTI2
     creds_b64 = base64.b64encode(f"{client_id}:{client_secret}".encode())
-    print(f"creds_b64: {creds_b64}")
+    logging.debug(f"creds_b64: {creds_b64}")
 
     # And create a POST request
     # API Hubic only support application/x-www-form-urlencoded, so do not try to send application/json data in your POST request
@@ -155,13 +146,13 @@ def get_storage_credentials():
     # 401 	unauthorized_client 	please verify credentials
     # 500 	server_error 	please retry
 
-    print(response.status_code)
+    logging.debug(response.status_code)
     r_data = response.json()
-    print(r_data)
+    logging.debug(r_data)
 
     access_token = r_data["access_token"]
     refresh_token = r_data["refresh_token"]
-    print(f"access_token: {access_token}")
+    logging.debug(f"access_token: {access_token}")
 
     # Get Json response
     # access_token 	z41k9n2LZ3rV...L6ZuOJs0oa1gQ7VVx
@@ -171,10 +162,7 @@ def get_storage_credentials():
 
 
     # 4. Call API URLs
-    time.sleep(1)
-    print()
-    print("# 4. Call API URLs")
-    print()
+    logging.info("4. Call API URLs")
 
     # You can store those data, and make your first call on hubic API ! Just ask the correct url and method according to your needs, and pass your access_token in the HTTP Authorization header, with the keyword Bearer
     """
@@ -185,33 +173,29 @@ def get_storage_credentials():
         "Content-Type": "application/x-www-form-urlencoded",
         "Authorization": f"Bearer {access_token}"
     }
-    print(f"headers: {headers}")
+    logging.debug(f"headers: {headers}")
 
-    print()
-    print("# 4.1 Request account info")
-    print()
+    logging.info("4.1 Request account info")
 
     response = requests.get(
         "https://api.hubic.com/1.0/account",
         headers=headers)
 
-    print(response.status_code)
-    print(response.json())
+    logging.debug(response.status_code)
+    logging.debug(response.json())
 
 
-    print()
-    print("# 4.2 Request Openstack storage credentials")
-    print()
+    logging.info("4.2 Request Openstack storage credentials")
 
-    print(f"headers: {headers}")
+    logging.debug(f"headers: {headers}")
 
     response = requests.get(
         "https://api.hubic.com/1.0/account/credentials",
         headers=headers)
 
-    print(response.status_code)
+    logging.debug(response.status_code)
     if response.status_code == 200:
-        print(response.json())
+        logging.debug(response.json())
 
     # Get File API credentials
     # expected_creds = {
