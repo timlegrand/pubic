@@ -3,16 +3,14 @@ import requests
 import logging
 
 
-def list_container(endpoint, access_token, name="default"):
-    # Openstack from here
-    logging.info("# 5. Openstack APIs")
+def list_containers(endpoint, access_token):
+    logging.info(f"Listing containers...")
 
-    headers = {
-        "X-Auth-Token": f"{access_token}"
-    }
+    headers = { "X-Auth-Token": f"{access_token}" }
     logging.debug(headers)
+
     response = requests.get(
-        endpoint + "/" + name,
+        endpoint + "/",
         headers=headers)
     logging.debug(response.status_code)
 
@@ -22,4 +20,4 @@ def list_container(endpoint, access_token, name="default"):
         import pdb
         pdb.set_trace()
 
-    return response.text.split("/n")
+    return response.text.split("\n")
