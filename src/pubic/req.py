@@ -8,16 +8,17 @@ async def fetch(session, endpoint, access_token, container_name="default", objec
     url = endpoint + "/" + container_name + "/" + object_path
     async with session.head(url, headers=headers) as response:
         # print("{}".format(response.url))
-        return response.headers  # TODO: return response.url along with result
+        return response.headers, object_path
 
 
 async def bound_fetch(sem, session, endpoint, access_token, container_name="default", object_path=""):
     async with sem:
         return await fetch(session, endpoint, access_token, container_name, object_path)
 
-import copy
-async def get_all(results, objects, endpoint, access_token, container_name="default"):
+
+async def get_all(objects, endpoint, access_token, container_name="default"):
     tasks = []
+    results = []
     # Limit simultaneous connections
     sem = asyncio.Semaphore(1000)
 
@@ -29,11 +30,10 @@ async def get_all(results, objects, endpoint, access_token, container_name="defa
         for t in tasks:
             results.append(await t)
         # print(results)
-        # return results
+        return results
 
-def run_all(search_results, endpoint, access_token, container_name="default"):
+
+def run_all(objects, endpoint, access_token, container_name="default"):
     objects_properties = []
-    loop = asyncio.get_event_loop()
-    future = asyncio.ensure_future(get_all(objects_properties, search_results, endpoint, access_token, container_name))
-    loop.run_until_complete(future)
+    objects_properties = asyncio.run(get_all(objects, endpoint, access_token, container_name))
     return objects_properties

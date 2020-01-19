@@ -26,7 +26,7 @@ def _main():
     objects_props = []
     objects_props = req.run_all(search_results, endpoint, access_token, container_name="default")
     objects_properties = []
-    for p in objects_props:
+    for p, object_name in objects_props:
         object_data = p
         object_last_modified = datetime.datetime.strptime(object_data["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
         # store_time = datetime.datetime.fromtimestamp(int(float(object_data["X-Timestamp"])))
@@ -35,7 +35,7 @@ def _main():
         object_size = object_data["Content-Length"]
         object_type = object_data["Content-Type"]
         objects_properties.append((
-            "object_name",  #TODO: store object name along with async task and match result
+            object_name,  #TODO: store object name along with async task and match result
             object_last_modified,
             object_size,
             object_type
