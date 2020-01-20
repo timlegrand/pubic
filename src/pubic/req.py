@@ -1,39 +1,44 @@
-import random
 import asyncio
 from aiohttp import ClientSession
 
 
-async def fetch(session, endpoint, access_token, container_name="default", object_path=""):
+async def stat_object(
+    session,
+    endpoint,
+    access_token,
+    container_name="default",
+    object_path=""):
+
     headers = { "X-Auth-Token": f"{access_token}" }
     url = endpoint + "/" + container_name + "/" + object_path
     async with session.head(url, headers=headers) as response:
-        # print("{}".format(response.url))
         return response.headers, object_path
 
 
-async def bound_fetch(sem, session, endpoint, access_token, container_name="default", object_path=""):
-    async with sem:
-        return await fetch(session, endpoint, access_token, container_name, object_path)
+async def stat_objects(
+    objects,
+    endpoint,
+    access_token,
+    container_name="default"):
 
-
-async def get_all(objects, endpoint, access_token, container_name="default"):
     tasks = []
     results = []
-    # Limit simultaneous connections
-    sem = asyncio.Semaphore(1000)
-
     async with ClientSession() as session:
-        for o in objects:
-            task = asyncio.create_task(bound_fetch(sem, session, endpoint, access_token, container_name, o))
-            tasks.append(task)
+        # Limit simultaneous connections to 1000
+        async with asyncio.Semaphore(1000) as sem:
+            for path in objects:
+                task = asyncio.create_task(stat_object(
+                    session,
+                    endpoint,
+                    access_token,
+                    container_name,
+                    path))
+                tasks.append(task)
 
-        for t in tasks:
-            results.append(await t)
-        # print(results)
-        return results
+            for t in tasks:
+                results.append(await t)
+            return results
 
 
-def run_all(objects, endpoint, access_token, container_name="default"):
-    objects_properties = []
-    objects_properties = asyncio.run(get_all(objects, endpoint, access_token, container_name))
-    return objects_properties
+def run_async(function, *args, **kwargs):
+    return asyncio.run(function(*args, **kwargs))
