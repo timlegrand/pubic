@@ -11,9 +11,9 @@ def _main():
 
     access_token, endpoint = auth.get_storage_credentials()
 
-    # containers = storage.list_containers(endpoint, access_token)
-    # for c in containers:
-    #     print(c)
+    containers = storage.list_containers(endpoint, access_token)
+    for c in containers:
+        print(c)
 
     objects = storage.list_container(endpoint, access_token)
     search_results = [x for x in objects if ".gif" in x][:10]
