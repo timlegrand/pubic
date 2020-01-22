@@ -1,12 +1,20 @@
 # coding: utf-8
-from pubic import auth
-from pubic import storage
-
+import argparse
 import logging
 import tabulate
 
+from pubic import auth
+from pubic import storage
+from pubic._version import __version_text__
+
 
 def _main():
+    parser = argparse.ArgumentParser(
+        description='''A terminal-based GUI client for Git.''')
+    parser.add_argument(
+        '-v', '--version', action='version', version=__version_text__)
+    parser.parse_args()
+
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
     access_token, endpoint = auth.get_storage_credentials()
