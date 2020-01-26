@@ -8,6 +8,8 @@ import logging
 
 from getpass import getpass
 
+from pubic import cache
+
 
 HUBIC_API_ENDPOINT = "https://api.hubic.com/"
 
@@ -240,6 +242,10 @@ def get_effective_storage_credentials(access_token):
 
 
 def get_storage_credentials():
+    creds = cache.get_storage_credentials()
+    if creds:
+        return creds
+
     redirect_uri = urllib.parse.quote(HUBIC_API_ENDPOINT, safe="")
 
     # 0. Register app and get cient ID and secret
@@ -257,6 +263,7 @@ def get_storage_credentials():
     # 4. Get storage access
     storage_access_token, storage_endpoint = get_effective_storage_credentials(access_token)
 
+    cache.save_storage_credentials(storage_access_token, storage_endpoint)
     return storage_access_token, storage_endpoint
 
     # 10. Refesh token
