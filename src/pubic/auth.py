@@ -182,8 +182,8 @@ def request_access_token(qs, client_id, client_secret, redirect_uri):
     return access_token, refresh_token
 
 
-def get_effective_storage_credentials(access_token):
-    logging.info("4. Request storage credentials")
+def get_effective_storage_credentials(api_access_token):
+    logging.info("Requesting storage credentials to the API")
 
     # You can store those data, and make your first call on hubic API ! Just ask the correct url and method according to your needs, and pass your access_token in the HTTP Authorization header, with the keyword Bearer
     """
@@ -192,7 +192,7 @@ def get_effective_storage_credentials(access_token):
     """
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": f"Bearer {access_token}"
+        "Authorization": f"Bearer {api_access_token}"
     }
     logging.debug(f"headers: {headers}")
 
@@ -219,8 +219,8 @@ def get_effective_storage_credentials(access_token):
     #     "endpoint":"https://lb1949.hubic.ovh.net/v1/AUTH_b61efe...98a614",
     #     "expires":"2019-12-14T22:52:45+01:00"
     # }
-    access_token = response.json()["token"]
-    endpoint = response.json()["endpoint"]
+    storage_access_token = response.json()["token"]
+    storage_endpoint = response.json()["endpoint"]
 
     # When you call API, you can miss your call, or an error can occured. You need to handle all of those errors.
     # HTTP 	error 	error_description
@@ -238,36 +238,10 @@ def get_effective_storage_credentials(access_token):
     # firstname 	John
     # lastname 	Doe
 
-    return access_token, endpoint
-
-
-def get_storage_credentials():
-    creds = cache.get_storage_credentials()
-    if creds:
-        return creds
-
-    redirect_uri = urllib.parse.quote(HUBIC_API_ENDPOINT, safe="")
-
-    # 0. Register app and get cient ID and secret
-    client_id, client_secret = get_client_id_and_secret('client_id.txt', 'client_secret.txt')
-
-    # 1. Request token
-    oauth_number, scope = request_token(client_id, redirect_uri)
-
-    # 2. Login & Consent
-    qs = login(oauth_number, scope)
-
-    # 3. Access token
-    access_token, refresh_token = request_access_token(qs, client_id, client_secret, redirect_uri)
-
-    # 4. Get storage access
-    storage_access_token, storage_endpoint = get_effective_storage_credentials(access_token)
-
-    cache.save_storage_credentials(storage_access_token, storage_endpoint)
     return storage_access_token, storage_endpoint
 
-    # 10. Refesh token
 
+def refresh_token():
     # But after a delimited time (21600 milliseconds), you will need to refresh your token ...
 
     # Refreshing an access token looks like getting a new one, but some parameter's values change.
@@ -283,3 +257,44 @@ def get_storage_credentials():
     # access_token 	c7rKS3VCMVFr...Nb5iPGdTKHRW05
     # expires_in 	21600
     # token_type 	Bearer
+
+
+def get_api_credentials():
+    api_creds = cache.load_api_credentials()
+    if api_creds:
+        return api_creds
+
+    logging.info(f"No cached API credentials available. Proceeding to oauth2 authentication...")
+
+    redirect_uri = urllib.parse.quote(HUBIC_API_ENDPOINT, safe="")
+
+    # 0. Register app and get cient ID and secret
+    client_id, client_secret = get_client_id_and_secret('client_id.txt', 'client_secret.txt')
+
+    # 1. Request token
+    oauth_number, scope = request_token(client_id, redirect_uri)
+
+    # 2. Login & Consent
+    qs = login(oauth_number, scope)
+
+    # 3. Access token
+    access_token, refresh_token = request_access_token(qs, client_id, client_secret, redirect_uri)
+
+    cache.save_api_credentials(access_token, refresh_token)
+    return access_token, refresh_token
+
+
+def get_storage_credentials():
+    storage_creds = cache.load_storage_credentials()
+    if storage_creds:
+        return storage_creds
+
+    logging.info(f"No cached storage credentials available.")
+    api_creds = get_api_credentials()
+    storage_access_token, storage_endpoint = get_effective_storage_credentials(api_creds[0])
+    cache.save_storage_credentials(storage_access_token, storage_endpoint)
+    return storage_access_token, storage_endpoint
+
+    # 10. Refesh token
+    # if access_token.has_expired():
+    #     access_token = refresh_token(refresh_token)
