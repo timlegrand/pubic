@@ -1,21 +1,14 @@
 # coding: utf-8
-import argparse
 import logging
 import tabulate
 
 from pubic import auth
 from pubic import storage
-from pubic._version import __version_text__
+from pubic import cli
 
 
 def _main():
-    # Handle CLI arguments
-    parser = argparse.ArgumentParser(description="""Pubic, the Hubic cloud storage client made reliable.""")
-    parser.add_argument("-v", "--version", action="version", version=__version_text__)
-    parser.add_argument("--list-containers", action="store_true", default=False, help="list containers")
-    parser.add_argument("--limit", type=int, default=10, help="limit for search results (default 10, 0 means no limit)")
-    parser.add_argument("--search", dest="search_expr",  help="search for files matching the given expression")
-    args = parser.parse_args()
+    args = cli.parse_cli_args()
 
     # Setup logging
     logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.INFO)
