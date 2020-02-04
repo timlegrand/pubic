@@ -16,21 +16,19 @@ def _main():
     # Authenticate against Hubic APIs
     access_token, endpoint = auth.get_storage_credentials()
 
+    storage_client = storage.Client(endpoint, access_token)
+
     if args.list_containers:
-        containers = storage.list_containers(endpoint, access_token)
+        containers = storage_client.list_containers()
         for c in containers:
             print(c)
 
     if args.search_expr:
-        objects = storage.list_container(endpoint, access_token)
+        objects = storage_client.list_container()
         search_results = [x for x in objects if args.search_expr in x]
         if args.limit:
             search_results = [x for x in objects if args.search_expr in x][:args.limit]
-        objects_properties = storage.stat_object_list(
-            search_results,
-            endpoint,
-            access_token,
-            container_name="default")
+        objects_properties = storage_client.stat_object_list(search_results)
         if objects_properties:
             headers = ["Name", "Last Modified", "Size (B)", "Type"]
             print(tabulate.tabulate(objects_properties, headers=headers))
