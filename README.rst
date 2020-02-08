@@ -21,15 +21,16 @@ Features
 
 At this early development stage it only supports:
 
-- authentication against Hubic services
+- authenticating against Hubic services
 - listing your Hubic containers and backups
-- list your files stored in the main Hubic container
-- search for a file/directory name pattern
+- listing your files stored in the main Hubic container
+- searching for a file/directory name pattern
+- downloading files (one by one)
 
 It will soon provide:
 
 - a fast and reliable way to download files
-- a daemon mode to keep a folder synced with your Hubic cloud storage
+- a daemon mode to keep a folder synced with your whole Hubic cloud storage
 
 Extra features that are not available in the official client will soon come:
 
