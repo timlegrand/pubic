@@ -3,13 +3,37 @@ import requests
 import logging
 import datetime
 
+from pubic import auth
 from pubic import req
+
+class AuthenticationException(Exception):
+    pass
+
+class UnauthorizedException(AuthenticationException):
+    pass
 
 
 class Client:
-    def __init__(self, endpoint, access_token):
+    def __init__(self, endpoint=None, access_token=None):
         self.endpoint = endpoint
         self.access_token = access_token
+        if not self.access_token or not self.endpoint:
+            self.authenticate()
+
+        data = []
+        while not data:
+            try:
+                data = self.list_containers()
+            except UnauthorizedException:
+                self.authenticate(use_cache=False)
+            except:
+                print("oops...")
+
+    def authenticate(self, use_cache=True):
+        try:
+            self.access_token, self.endpoint = auth.get_storage_credentials(use_cache)
+        except ConnectionError:
+            logging.error("Server unreachable.")
 
     def list_containers(self):
         logging.info(f"Listing containers...")
@@ -25,8 +49,10 @@ class Client:
         if response.status_code != 200:
             logging.debug(response.reason)
             logging.debug(response.text)
-            import pdb
-            pdb.set_trace()
+            if response.status_code == 401 and response.reason == "Unauthorized":
+                raise UnauthorizedException()
+            # import pdb
+            # pdb.set_trace()
 
         return response.text.split("\n")
 

@@ -14,9 +14,7 @@ def _main():
     logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.INFO)
 
     # Authenticate against Hubic APIs
-    access_token, endpoint = auth.get_storage_credentials()
-
-    storage_client = storage.Client(endpoint, access_token)
+    storage_client = storage.Client()
 
     if args.list_containers:
         containers = storage_client.list_containers()

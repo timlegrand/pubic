@@ -8,8 +8,9 @@ def load_storage_credentials(storage_credentials_file='storage_credentials.txt')
             storage_access_token = f.readline().rstrip('\n')
             storage_endpoint = f.readline().rstrip('\n')
         return storage_access_token, storage_endpoint
-    except:
-        logging.info(f"Unable to use cached credentials file: {storage_credentials_file}")
+    except Exception as e:
+        logging.info(f"e: {type(e)}")
+        logging.info(f"Unable to get cached storage credentials from: {storage_credentials_file}")
         return None
 
 

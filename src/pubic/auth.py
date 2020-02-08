@@ -259,10 +259,11 @@ def refresh_token():
     # token_type 	Bearer
 
 
-def get_api_credentials():
-    api_creds = cache.load_api_credentials()
-    if api_creds:
-        return api_creds
+def get_api_credentials(use_cache=True):
+    if use_cache:
+        api_creds = cache.load_api_credentials()
+        if api_creds:
+            return api_creds
 
     logging.info(f"No cached API credentials available. Proceeding to oauth2 authentication...")
 
@@ -284,13 +285,14 @@ def get_api_credentials():
     return access_token, refresh_token
 
 
-def get_storage_credentials():
-    storage_creds = cache.load_storage_credentials()
-    if storage_creds:
-        return storage_creds
+def get_storage_credentials(use_cache=True):
+    if use_cache:
+        storage_creds = cache.load_storage_credentials()
+        if storage_creds:
+            return storage_creds
 
     logging.info(f"No cached storage credentials available.")
-    api_creds = get_api_credentials()
+    api_creds = get_api_credentials(use_cache)
     storage_access_token, storage_endpoint = get_effective_storage_credentials(api_creds[0])
     cache.save_storage_credentials(storage_access_token, storage_endpoint)
     return storage_access_token, storage_endpoint
