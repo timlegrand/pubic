@@ -1,34 +1,44 @@
 # coding: utf-8
-import argparse
 import logging
 import tabulate
 
 from pubic import auth
 from pubic import storage
-from pubic._version import __version_text__
+from pubic import cli
 
 
 def _main():
-    parser = argparse.ArgumentParser(
-        description='''A terminal-based GUI client for Git.''')
-    parser.add_argument(
-        '-v', '--version', action='version', version=__version_text__)
-    parser.parse_args()
+    args = cli.parse_cli_args()
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    # Setup logging
+    logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.INFO)
 
-    access_token, endpoint = auth.get_storage_credentials()
+    # Authenticate against Hubic APIs
+    storage_client = storage.Client()
 
-    containers = storage.list_containers(endpoint, access_token)
-    for c in containers:
-        print(c)
+    if args.list_containers:
+        containers = storage_client.list_containers()
+        for c in containers:
+            print(c)
 
-    objects = storage.list_container(endpoint, access_token)
-    search_results = [x for x in objects if ".gif" in x][:10]
+    if args.search_expr:
+        objects = storage_client.list_container()
+        search_results = [x for x in objects if args.search_expr in x]
+        if args.limit:
+            search_results = [x for x in objects if args.search_expr in x][:args.limit]
+        objects_properties = storage_client.stat_object_list(search_results)
+        if objects_properties:
+            headers = ["Name", "Last Modified", "Size (B)", "Type"]
+            print(tabulate.tabulate(objects_properties, headers=headers))
+        else:
+            print("No result.")
 
-    objects_properties = storage.stat_object_list(search_results, endpoint, access_token, container_name="default")
-    headers = ["Name", "Last Modified", "Size (B)", "Type"]
-    print(tabulate.tabulate(objects_properties, headers=headers))
+    if args.download_path:
+        content = storage_client.download_object(args.download_path)
+        import os
+        destination = args.destination or os.path.basename(args.download_path)
+        with open(destination, "wb") as f:
+            f.write(content)
 
 
 if __name__ == '__main__':
