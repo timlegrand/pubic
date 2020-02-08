@@ -77,7 +77,7 @@ class Client:
         return response.text.split("\n")
 
 
-    def stat_object(cself, ontainer_name="default", object_path=""):
+    def stat_object(self, container_name="default", object_path=""):
         logging.debug(f"Stating '{container_name}/{object_path}'...")
 
         headers = { "X-Auth-Token": f"{self.access_token}" }
@@ -93,6 +93,24 @@ class Client:
             logging.debug(response.text)
 
         return response.headers
+
+
+    def download_object(self, object_path="", container_name="default"):
+        logging.debug(f"Downloading '{container_name}/{object_path}'...")
+
+        headers = { "X-Auth-Token": f"{self.access_token}" }
+        logging.debug(headers)
+
+        response = requests.get(
+            self.endpoint + "/" + container_name + "/" + object_path,
+            headers=headers)
+        logging.debug(response.status_code)
+
+        if response.status_code != 200:
+            logging.debug(response.reason)
+            logging.debug(response.text)
+
+        return response.content
 
 
     def stat_object_list(

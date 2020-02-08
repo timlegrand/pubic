@@ -33,6 +33,13 @@ def _main():
         else:
             print("No result.")
 
+    if args.download_path:
+        content = storage_client.download_object(args.download_path)
+        import os
+        destination = args.destination or os.path.basename(args.download_path)
+        with open(destination, "wb") as f:
+            f.write(content)
+
 
 if __name__ == '__main__':
     _main()

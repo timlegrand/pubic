@@ -11,5 +11,7 @@ def parse_cli_args():
     parser.add_argument("--list-containers", action="store_true", default=False, help="list containers")
     parser.add_argument("--limit", type=int, default=10, help="limit for search results (default 10, 0 means no limit)")
     parser.add_argument("--search", dest="search_expr",  help="search for files matching the given expression")
+    parser.add_argument("--download", dest="download_path",  help="download a specific file")
+    parser.add_argument("--destination",  help="destination for downloaded content")
     return parser.parse_args()
 
