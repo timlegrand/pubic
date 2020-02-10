@@ -104,7 +104,20 @@ class Client:
             logging.debug(response.reason)
             logging.debug(response.text)
 
-        return response.headers
+        object_data = response.headers
+        object_last_modified = datetime.datetime.strptime(object_data["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
+        # store_time = datetime.datetime.fromtimestamp(int(float(object_data["X-Timestamp"])))
+        # print(object_last_modified.strftime('%Y-%m-%d %H:%M:%S'))
+        # print(store_time.strftime('%Y-%m-%d %H:%M:%S'))
+        object_size = object_data["Content-Length"]
+        object_type = object_data["Content-Type"]
+        object_properties = (
+            object_name,
+            object_last_modified,
+            object_size,
+            object_type
+        )
+        return objects_properties
 
 
     def download_object(self, object_path="", container_name="default"):
