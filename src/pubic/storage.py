@@ -2,9 +2,15 @@
 import requests
 import logging
 import datetime
+import time
+
+from requests.exceptions import *
 
 from pubic import auth
 from pubic import req
+
+
+MAX_RETRY = 3
 
 class AuthenticationException(Exception):
     pass
@@ -20,14 +26,22 @@ class Client:
         if not self.access_token or not self.endpoint:
             self.authenticate()
 
+        retry = 0
         data = []
-        while not data:
+        while not data and retry < MAX_RETRY:
             try:
                 data = self.list_containers()
             except UnauthorizedException:
                 self.authenticate(use_cache=False)
+            except ConnectionError as e:
+                #Exception
+                # print(e)
+                logging.error("Please check your Internet connection.")
             except:
-                print("oops...")
+                print("Oops!")
+
+            time.sleep(1)
+            retry += 1
 
     def authenticate(self, use_cache=True):
         try:
@@ -71,8 +85,6 @@ class Client:
         if response.status_code != 200:
             logging.debug(response.reason)
             logging.debug(response.text)
-            import pdb
-            pdb.set_trace()
 
         return response.text.split("\n")
 
@@ -92,7 +104,20 @@ class Client:
             logging.debug(response.reason)
             logging.debug(response.text)
 
-        return response.headers
+        object_data = response.headers
+        object_last_modified = datetime.datetime.strptime(object_data["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
+        # store_time = datetime.datetime.fromtimestamp(int(float(object_data["X-Timestamp"])))
+        # print(object_last_modified.strftime('%Y-%m-%d %H:%M:%S'))
+        # print(store_time.strftime('%Y-%m-%d %H:%M:%S'))
+        object_size = object_data["Content-Length"]
+        object_type = object_data["Content-Type"]
+        object_properties = (
+            object_name,
+            object_last_modified,
+            object_size,
+            object_type
+        )
+        return objects_properties
 
 
     def download_object(self, object_path="", container_name="default"):
@@ -110,7 +135,7 @@ class Client:
             logging.debug(response.reason)
             logging.debug(response.text)
 
-        return response.content
+        return response.content, response.headers
 
 
     def stat_object_list(

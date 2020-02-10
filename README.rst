@@ -25,7 +25,8 @@ At this early development stage it only supports:
 - listing your Hubic containers and backups
 - listing your files stored in the main Hubic container
 - searching for a file/directory name pattern
-- downloading files (one by one)
+- downloading a specific file
+- downloading all your files (safe - down sync only) (slow)
 
 It will soon provide:
 
@@ -42,7 +43,21 @@ Extra features that are not available in the official client will soon come:
 Install
 -------
 
+.. code-block::
+
+  pip install .
+
+
 Requirements :
 
 - probably creating an app key in your Hubic account
 - Python 3.7 (backward compatibility will be considered later)
+
+
+Use
+---
+
+.. code-block::
+
+  pubic --sync-folder localHubic  # downloads all your files into a ./localHubic folder
+  pubic --help

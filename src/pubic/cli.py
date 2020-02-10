@@ -13,5 +13,6 @@ def parse_cli_args():
     parser.add_argument("--search", dest="search_expr",  help="search for files matching the given expression")
     parser.add_argument("--download", dest="download_path",  help="download a specific file")
     parser.add_argument("--destination",  help="destination for downloaded content")
+    parser.add_argument("--sync-folder",  help="folder to sync the remote with (safe for cloud - download only)")
     return parser.parse_args()
 
