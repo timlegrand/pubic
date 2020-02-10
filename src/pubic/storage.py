@@ -85,8 +85,6 @@ class Client:
         if response.status_code != 200:
             logging.debug(response.reason)
             logging.debug(response.text)
-            import pdb
-            pdb.set_trace()
 
         return response.text.split("\n")
 
