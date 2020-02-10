@@ -2,9 +2,15 @@
 import requests
 import logging
 import datetime
+import time
+
+from requests.exceptions import *
 
 from pubic import auth
 from pubic import req
+
+
+MAX_RETRY = 3
 
 class AuthenticationException(Exception):
     pass
@@ -20,14 +26,22 @@ class Client:
         if not self.access_token or not self.endpoint:
             self.authenticate()
 
+        retry = 0
         data = []
-        while not data:
+        while not data and retry < MAX_RETRY:
             try:
                 data = self.list_containers()
             except UnauthorizedException:
                 self.authenticate(use_cache=False)
+            except ConnectionError as e:
+                #Exception
+                # print(e)
+                logging.error("Please check your Internet connection.")
             except:
-                print("oops...")
+                print("Oops!")
+
+            time.sleep(1)
+            retry += 1
 
     def authenticate(self, use_cache=True):
         try:
