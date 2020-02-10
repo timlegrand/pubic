@@ -22,7 +22,9 @@ def _main():
     args = cli.parse_cli_args()
 
     # Setup logging
-    logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.INFO)
+    logging.basicConfig(
+        format="[%(levelname)s] %(message)s",
+        level=getattr(logging, args.log_level.upper()))
 
     # Authenticate against Hubic APIs
     storage_client = storage.Client()
