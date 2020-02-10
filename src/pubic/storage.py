@@ -135,7 +135,7 @@ class Client:
             logging.debug(response.reason)
             logging.debug(response.text)
 
-        return response.content
+        return response.content, response.headers
 
 
     def stat_object_list(
