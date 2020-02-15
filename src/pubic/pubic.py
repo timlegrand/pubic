@@ -30,12 +30,15 @@ def _main():
         objects_properties = storage_client.stat_object_list(search_results)
         if objects_properties:
             headers = ["Name", "Last Modified", "Size (B)", "Type"]
-            print(tabulate.tabulate(objects_properties, headers=headers))
+            data = map(lambda x: (x["path"], x["last-modified"], x["size"], x["type"]), objects_properties)
+            print(tabulate.tabulate(data, headers=headers))
         else:
             print("No result.")
 
     if args.download_path:
-        content = storage_client.download_object(args.download_path)
+        content, props = storage_client.download_object(args.download_path)
+        if props == None or props["Content-Type"] == "application/directory":
+            return
         destination = args.destination or os.path.basename(args.download_path)
         with open(destination, "wb") as f:
             f.write(content)

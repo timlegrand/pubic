@@ -19,6 +19,22 @@ class UnauthorizedException(AuthenticationException):
     pass
 
 
+def parse_metadata(headers, path=""):
+    props = {}
+    if path:
+        props["path"] = path
+    if "Last-Modified" in headers:  # May not be present
+        props["last-modified"] = datetime.datetime.strptime(headers["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
+    if "X-Timestamp" in headers:  # May not be present
+        props["store-time"] = datetime.datetime.fromtimestamp(int(float(headers["X-Timestamp"])))
+    if "Content-Length" in headers:  # Mandatory
+        props["size"] = int(headers["Content-Length"])
+    if "Content-Type" in headers:  # Mandatory
+        props["type"] = headers["Content-Type"]
+
+    return props
+
+
 class Client:
     def __init__(self, endpoint=None, access_token=None):
         self.endpoint = endpoint
@@ -104,20 +120,8 @@ class Client:
             logging.debug(response.reason)
             logging.debug(response.text)
 
-        object_data = response.headers
-        object_last_modified = datetime.datetime.strptime(object_data["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
-        # store_time = datetime.datetime.fromtimestamp(int(float(object_data["X-Timestamp"])))
-        # print(object_last_modified.strftime('%Y-%m-%d %H:%M:%S'))
-        # print(store_time.strftime('%Y-%m-%d %H:%M:%S'))
-        object_size = object_data["Content-Length"]
-        object_type = object_data["Content-Type"]
-        object_properties = (
-            object_name,
-            object_last_modified,
-            object_size,
-            object_type
-        )
-        return objects_properties
+        metadata = parse_metadata(response.headers, object_path)
+        return metadata
 
 
     def download_object(self, object_path="", container_name="default"):
@@ -132,10 +136,10 @@ class Client:
         logging.debug(response.status_code)
 
         if response.status_code != 200:
-            logging.debug(response.reason)
-            logging.debug(response.text)
+            logging.warning(f"Error trying to download '{object_path}': {response.reason} (status code {response.status_code})")
+            return None, parse_metadata(response.headers, object_path)
 
-        return response.content, response.headers
+        return response.content, parse_metadata(response.headers, object_path)
 
 
     def stat_object_list(
@@ -154,18 +158,6 @@ class Client:
             container_name="default")
 
         objects_properties = []
-        for p, object_name in objects_props:
-            object_data = p
-            object_last_modified = datetime.datetime.strptime(object_data["Last-Modified"], "%a, %d %b %Y %H:%M:%S %Z")
-            # store_time = datetime.datetime.fromtimestamp(int(float(object_data["X-Timestamp"])))
-            # print(object_last_modified.strftime('%Y-%m-%d %H:%M:%S'))
-            # print(store_time.strftime('%Y-%m-%d %H:%M:%S'))
-            object_size = object_data["Content-Length"]
-            object_type = object_data["Content-Type"]
-            objects_properties.append((
-                object_name,
-                object_last_modified,
-                object_size,
-                object_type
-            ))
+        for props, object_name in objects_props:
+            objects_properties.append(parse_metadata(props, object_name))
         return objects_properties

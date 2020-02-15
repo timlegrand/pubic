@@ -27,19 +27,30 @@ def sync_folder(storage_client, sync_folder):
             continue
 
         dest_full_path = os.path.join(sync_folder, file_path)
-        logging.warning(f"Downloading missing file {file_path} into {dest_full_path}")
-        content, props = storage_client.download_object(file_path)
+        logging.info(f"Downloading {file_path}")
+        try:
+            content, props = storage_client.download_object(file_path)
+        except:
+            logging.warning(f"Error trying to download '{file_path}'. Skipping...")
+            pass
+        if not content or not props:
+            logging.warning(f"Missing data for '{file_path}'. Maybe be an exotic format for a directory? Skipping...")
+            continue
 
-        if props["Content-Type"] == "application/directory":
-            logging.warning("Creating pure directory " + file_path)
-            os.makedirs(dest_full_path)
+        if not content and (
+            props["type"] == "application/directory" or
+            props["size"] == 0):
+            if not os.path.exists(dest_full_path):
+                logging.info("Creating pure directory " + dest_full_path)
+                os.makedirs(dest_full_path)
             continue
 
         dest_full_dirpath = os.path.dirname(dest_full_path)
         if not os.path.exists(dest_full_dirpath):
-            logging.warning("Creating directory " + dest_full_dirpath)
+            logging.info("Creating directory " + dest_full_dirpath)
             os.makedirs(dest_full_dirpath)
         with open(dest_full_path, "wb") as f:
+            logging.info(f"Writing file {dest_full_path}")
             f.write(content)
     return
 
