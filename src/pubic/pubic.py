@@ -46,6 +46,14 @@ def _main():
     if args.sync_folder:
         sync.sync_folder(storage_client, args.sync_folder)
 
+    if args.quotas:
+        objects = storage_client.list_container()
+        objects_properties = storage_client.stat_object_list(objects)
+        total_size = sum(p["size"] for p in objects_properties)
+        # total_size = 7015477674  # for testing purpose
+        print(f"Total size (on remote): {float(total_size) / 1024 ** 3:.2f} GB")
+        # print(f"Total size (local copy): {total_size}")
+
 
 if __name__ == '__main__':
     _main()
