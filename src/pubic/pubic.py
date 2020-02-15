@@ -1,20 +1,18 @@
 # coding: utf-8
-import logging
 import tabulate
 
 from pubic import auth
 from pubic import storage
 from pubic import cli
 from pubic import sync
+from pubic import logs
 
 
 def _main():
     args = cli.parse_cli_args()
 
     # Setup logging
-    logging.basicConfig(
-        format="[%(levelname)s] %(message)s",
-        level=getattr(logging, args.log_level.upper()))
+    logger = logs.setup_logger(args)
 
     # Authenticate against Hubic APIs
     storage_client = storage.Client()
