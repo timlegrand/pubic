@@ -1,3 +1,4 @@
+import logging
 import asyncio
 from aiohttp import ClientSession
 
@@ -34,6 +35,7 @@ async def stat_objects(
                     container_name,
                     path))
                 tasks.append(task)
+                logging.debug(f"Stating \"{container_name}/{path}\" ...")
 
             for t in tasks:
                 results.append(await t)

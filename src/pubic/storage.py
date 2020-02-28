@@ -12,12 +12,6 @@ from pubic import req
 
 MAX_RETRY = 3
 
-class AuthenticationException(Exception):
-    pass
-
-class UnauthorizedException(AuthenticationException):
-    pass
-
 
 def parse_metadata(headers, path=""):
     props = {}
@@ -47,7 +41,7 @@ class Client:
         while not data and retry < MAX_RETRY:
             try:
                 data = self.list_containers()
-            except UnauthorizedException:
+            except auth.UnauthorizedException:
                 self.authenticate(use_cache=False)
             except ConnectionError as e:
                 #Exception
@@ -58,6 +52,9 @@ class Client:
 
             time.sleep(1)
             retry += 1
+
+        if not self.endpoint or not self.access_token:
+            raise auth.AuthenticationException("Cannot get authentication information")
 
     def authenticate(self, use_cache=True):
         try:

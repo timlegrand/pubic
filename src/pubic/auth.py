@@ -11,7 +11,19 @@ from getpass import getpass
 from pubic import cache
 
 
+class AuthenticationException(Exception):
+    pass
+
+class UnauthorizedException(AuthenticationException):
+    pass
+
+class WrongCredentialsException(AuthenticationException):
+    pass
+
+
 HUBIC_API_ENDPOINT = "https://api.hubic.com/"
+REDIRECT_URI = "https://api.hubic.com/"
+# REDIRECT_URI = "http://localhost/"
 
 
 def generate_random_string(length=16):
@@ -52,9 +64,14 @@ def request_token(client_id, redirect_uri):
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    logging.debug(request_token_url)
     response = requests.get(request_token_url, headers=headers)
-    logging.debug(response.status_code)
+    query_string = urllib.parse.parse_qs(response.url)
+    logging.debug(query_string)
+    if "error_description" in query_string:
+        error_description = query_string["error_description"][0]
+        if "please verify credentials" in error_description:
+            raise WrongCredentialsException(error_description)
+        raise AuthenticationException(error_description)
 
     logging.debug(response.headers.get("location", "Cannot get response location header."))
     logging.debug("Parsing response HTML to get oauth code...")
@@ -69,6 +86,7 @@ def request_token(client_id, redirect_uri):
         import pdb
         pdb.set_trace()
 
+    logging.debug(f"Scope: {scope}")
     return oauth_number, scope
 
 
@@ -98,12 +116,8 @@ def login(oauth_number, scope, user_login_file='', user_password_file=''):
         "Content-Type": "application/x-www-form-urlencoded"
     }
 
-    logging.debug("Sending login request...")
-    logging.debug(oauth_url)
-    logging.debug(headers)
-    logging.debug(data)
+    logging.debug(f"Sending login request: {data}")
     response = requests.post(oauth_url, headers=headers, data=data)
-    logging.debug(response.status_code)
     logging.debug(response.url)
     qs = urllib.parse.parse_qs(urllib.parse.urlparse(response.url).query)
     logging.debug(qs)
@@ -165,9 +179,14 @@ def request_access_token(qs, client_id, client_secret, redirect_uri):
     # 401 	unauthorized_client 	please verify credentials
     # 500 	server_error 	please retry
 
-    logging.debug(response.status_code)
     r_data = response.json()
-    logging.debug(r_data)
+
+    if response.status_code == 401:
+        raise WrongCredentialsException(error_description)
+
+    if "error_description" in r_data:
+        logging.debug(r_data)
+        raise
 
     access_token = r_data["access_token"]
     refresh_token = r_data["refresh_token"]
@@ -200,7 +219,6 @@ def get_effective_storage_credentials(api_access_token):
     #     "https://api.hubic.com/1.0/account",
     #     headers=headers)
 
-    # logging.debug(response.status_code)
     # logging.debug(response.json())
 
     logging.debug(f"headers: {headers}")
@@ -209,7 +227,6 @@ def get_effective_storage_credentials(api_access_token):
         "https://api.hubic.com/1.0/account/credentials",
         headers=headers)
 
-    logging.debug(response.status_code)
     if response.status_code == 200:
         logging.debug(response.json())
 
@@ -267,7 +284,7 @@ def get_api_credentials(use_cache=True):
 
     logging.info(f"No cached API credentials available. Proceeding to oauth2 authentication...")
 
-    redirect_uri = urllib.parse.quote(HUBIC_API_ENDPOINT, safe="")
+    redirect_uri = urllib.parse.quote(REDIRECT_URI, safe="")
 
     # 0. Register app and get cient ID and secret
     client_id, client_secret = get_client_id_and_secret('client_id.txt', 'client_secret.txt')
@@ -292,8 +309,19 @@ def get_storage_credentials(use_cache=True):
             return storage_creds
 
     logging.info(f"No cached storage credentials available.")
-    api_creds = get_api_credentials(use_cache)
-    storage_access_token, storage_endpoint = get_effective_storage_credentials(api_creds[0])
+
+    try:
+        api_creds = get_api_credentials(use_cache)
+    except WrongCredentialsException:
+        cache.reset_api_credentials()
+        return get_api_credentials(False)
+
+    try:
+        storage_access_token, storage_endpoint = get_effective_storage_credentials(api_creds[0])
+    except WrongCredentialsException:
+        cache.reset_storage_credentials()
+        return get_storage_credentials(False)
+
     cache.save_storage_credentials(storage_access_token, storage_endpoint)
     return storage_access_token, storage_endpoint
 
