@@ -9,7 +9,7 @@ def sync_folder(storage_client, sync_folder):
     cloud_files = storage_client.list_container("default")
 
     if not os.path.exists(sync_folder):
-        print(f"Sync folder '{sync_folder}' does not exist. Creating...")
+        logging.info(f"Sync folder '{sync_folder}' does not exist. Creating...")
         os.mkdir(sync_folder)
 
     # Meanwhile, get the list of files on the disk (destination folder)

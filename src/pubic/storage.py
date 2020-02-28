@@ -44,11 +44,9 @@ class Client:
             except auth.UnauthorizedException:
                 self.authenticate(use_cache=False)
             except ConnectionError as e:
-                #Exception
-                # print(e)
                 logging.error("Please check your Internet connection.")
-            except:
-                print("Oops!")
+            except Exception as e:
+                logging.error(e)
 
             time.sleep(1)
             retry += 1
