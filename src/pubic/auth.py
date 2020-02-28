@@ -48,7 +48,7 @@ def request_token(client_id, redirect_uri):
     logging.info("1. Authorization Code Request")
 
     # scope = "usage.r,account.r,getAllLinks.r,credentials.r,sponsorCode.r,activate.w,sponsored.r,links.drw"
-    scope = "account.r,credentials.r"
+    scope = "usage.r,account.r,credentials.r"
     response_type = "code"
     random_string = generate_random_string()
     request_token_url = "{}oauth/auth/?client_id={}&redirect_uri={}&scope={}&response_type={}&state={}".format(

@@ -2,10 +2,11 @@
 import tabulate
 
 from pubic import auth
-from pubic import storage
 from pubic import cli
-from pubic import sync
+from pubic import hubic
 from pubic import logs
+from pubic import storage
+from pubic import sync
 
 
 def _main():
@@ -47,11 +48,10 @@ def _main():
         sync.sync_folder(storage_client, args.sync_folder)
 
     if args.quotas:
-        objects = storage_client.list_container()
-        objects_properties = storage_client.stat_object_list(objects)
-        total_size = sum(p["size"] for p in objects_properties)
-        # total_size = 7015477674  # for testing purpose
-        print(f"Total size (on remote): {float(total_size) / 1024 ** 3:.2f} GB")
+        c = hubic.Client()
+        usage = c.get_quotas()
+        print(f"Total size (on remote): {float(usage.get('used', 0)) / 1024 ** 3:.2f} GB")
+        print(f"Quota (on remote): {float(usage.get('quota', 0)) / 1024 ** 3:.2f} GB")
         # print(f"Total size (local copy): {total_size}")
 
 
