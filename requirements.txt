@@ -4,4 +4,4 @@ idna==2.8
 requests==2.22.0
 urllib3==1.25.7
 tabulate==0.8.6
-aiohttp==3.6.2
+aiohttp==3.7.4
